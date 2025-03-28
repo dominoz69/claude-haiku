@@ -8,7 +8,7 @@ app.use(express.json());
 app.get('/chat', async (req, res) => {
     const query = req.query.query; 
     const payload = {
-        model: "claude-3-haiku-20240307",
+        model: "o3-mini",
         messages: [
             {
                 role: "user",
