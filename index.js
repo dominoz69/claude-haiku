@@ -34,23 +34,33 @@ app.get('/chat', async (req, res) => {
         });
 
         let fullMessage = '';
-        response.data.on('data', chunk => {
+        const stream = response.data;
+        
+        stream.on('data', chunk => {
             const str = chunk.toString();
-            if (str.startsWith('data: ') && str !== 'data: [DONE]') {
-                try {
-                    const data = JSON.parse(str.substring(6));
-                    if (data.message) fullMessage += data.message;
-                } catch (e) {}
-            }
+            const lines = str.split('\n\n');
+            
+            lines.forEach(line => {
+                if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                    try {
+                        const data = JSON.parse(line.substring(6));
+                        if (data.message) fullMessage += data.message;
+                    } catch (e) {}
+                }
+            });
         });
 
-        response.data.on('end', () => {
+        stream.on('end', () => {
             res.json({ response: fullMessage });
+        });
+
+        stream.on('error', (err) => {
+            res.status(500).send('Stream error');
         });
 
     } catch (error) {
         if (error.response) {
-            res.status(error.response.status).send(error.response.data);
+            res.status(error.response.status).send(error.response.statusText);
         } else {
             res.status(500).send('Internal Server Error');
         }
